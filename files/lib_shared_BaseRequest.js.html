@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/shared/BaseRequest.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/shared/BaseRequest.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule BaseRequest
+                */
+                
+                var Promise = require(&#x27;bluebird&#x27;);
+                var agent = require(&#x27;superagent&#x27;);
+                var Route = require(&#x27;route-parser&#x27;);
+                
+                
+                /**
+                 * BaseRequest is the base API request object constructor
+                 *
+                 * @class BaseRequest
+                 * @constructor
+                 * @param {Object} options  A hash of options for configuring the BaseRequest instance
+                 * @param {String} options.endpoint  The endpoint URI to request
+                 * @param {String} [options.username]  A username for authenticating API requests
+                 * @param {String} [options.password]  A password for authenticating API requests
+                 */
+                 function BaseRequest(options) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    *
+                    * @property _options
+                    * @type Objecthe
+                    * @private
+                    * @default {}
+                    */
+                    this._options = options || {};
+                    
+                    /**
+                    * Object containing request path variables used to assemble the request URI
+                    * (This will be overwritten by each of the child constructor classes i.e Client, List, etc.)
+                    *
+                    * @property _path
+                    * @type Object
+                    * @private
+                    * @default {}
+                    */
+                    this._path = {};
+                
+                    /**
+                    * The URI template used to generate the URI to request 
+                    * (This will be overwritten by each of the child constructor classes i.e Client, List, etc.)
+                    * 
+                    * @property _template
+                    * @type String
+                    * @private
+                    * @default &#x27;&#x27;
+                    */
+                    this._template = &#x27;&#x27;;
+                
+                    /**
+                    * Supported HTTP methods for this BaseRequest instance
+                    * (Each of the child constructor classes i.e Client, List etc. define their own subset of supported methods)
+                    * 
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [ &#x27;head&#x27;, &#x27;get&#x27;, &#x27;put&#x27;, &#x27;post&#x27;, &#x27;delete&#x27;, &#x27;patch&#x27; ]
+                    */
+                    this._supportedMethods = [&#x27;head&#x27;,&#x27;get&#x27;,&#x27;put&#x27;,&#x27;post&#x27;,&#x27;delete&#x27;,&#x27;patch&#x27;];
+                
+                 }
+                
+                
+                // Utility functions that are used by invokeAndPromisify()
+                // =======================================================
+                
+                
+                /** 
+                * No-operation function 
+                */
+                 function noop() { }
+                
+                
+                 /** 
+                 * Identity function that simply returns the input value 
+                 */
+                 function identity(input) {
+                    return input;
+                 }
+                
+                
+                /** 
+                * If func is a function then return it, else return a noop function
+                *
+                * @param {Function|undefined} func A BaseRequest request callback
+                * @return {Function} The provided func or a noop function
+                */
+                 function ensureCallback(func) {
+                    return ( typeof func === &#x27;function&#x27; ) ? func : noop;
+                }
+                
+                
+                // Some transform functions that are passed to invokeAndPromisify()
+                // ================================================================
+                
+                /** 
+                * Returns the body of the request object
+                * 
+                * @param {Object} result The result object from the HTTP request
+                * @return {Object} The body property of the result object
+                */
+                function getBody(result) {
+                    return result.body;
+                }
+                
+                
+                /** 
+                * Returns the headers of the request object
+                * 
+                * @param {Object} result The result object from the HTTP request
+                * @return {Object} The headers property of the result object
+                */
+                function getHeaders(result) {
+                    return result.headers;
+                }
+                
+                
+                // Helper functions used by request methods i.e .get(),.post(), etc.
+                // =================================================================
+                
+                /**
+                * Invoke request using the superagent request object and call the callback function if provided,
+                * and return a promise to the HTTP request.
+                *
+                * @param {Object} request A superagent request object
+                * @param {Function} [callback]  The promise callback
+                * @param {Function} [transform] Transform operation to be carried on the response
+                * @return {Promise} A promise to the superagent request 
+                */
+                function invokeandPromisify(request, callback, transform) {
+                    callback = ensureCallback( callback );
+                    transform = transform || identity;
+                    return new Promise(function(resolve,reject) {
+                    // Invoke the request
+                    request.end(function(err,result) {
+                
+                        // Return the results as a promise
+                        if (err || result.error) {
+                            reject(err || result.error);
+                        } else {
+                            resolve(result);
+                        }
+                    });
+                    }).then(transform).nodeify(callback);
+                }
+                
+                
+                /**
+                * Validates the path parameter values against corresponding regular expressions(if any)
+                * 
+                * @param {Object} pathObj The path object to be validated
+                * @param {Object} validatorObj A object containing regular expression corresponding to each key in the pathObj
+                * @return {Object} Returns the pathObj if successfully validated else it will throw
+                */
+                function validatePath(pathObj,validatorObj) {
+                    if (!validatorObj) {
+                        return pathObj;
+                    }
+                
+                    for(var prop in pathObj) {
+                
+                        if(!pathObj.hasOwnProperty(prop)) {
+                            continue;
+                        }
+                
+                        if (!validatorObj[prop]) {
+                            // no validator, no issue
+                            continue;
+                        }
+                
+                        if ( !(pathObj[prop]+&#x27;&#x27;).match(validatorObj[prop]) ) {
+                            throw new Error (
+                                prop + &#x27;does not match&#x27; + validatorObj[prop]
+                            );
+                        }
+                
+                        return pathObj;
+                    }
+                }
+                
+                
+                // Prototype methods
+                // =================
+                
+                /**
+                 * Verify that the request object in use supports a HTTP method
+                 *
+                 * @private
+                 * @method _checkMethodSupport
+                 * @param {String} method An HTTP method to check (&#x27;get&#x27;, &#x27;post&#x27;, etc)
+                 * @return {Boolean} Returns true if the HTTP method is supported else it will throw
+                 */
+                BaseRequest.prototype._checkMethodSupport = function(method) {
+                    if ( this._supportedMethods.indexOf(method) == -1 ) {
+                        throw new Error(
+                            &#x27;Unsupported method, Supported methods are:&#x27;+
+                            this._supportedMethods.join(&#x27;,&#x27;)
+                        );
+                    }
+                }
+                
+                
+                /**
+                * Checks if authentication is externally forced on the request object by passing in username &amp; password
+                * 
+                * @private
+                * @method _checkAuthParameters
+                * @return {Boolean} Returns true if auth is forced else false
+                */
+                BaseRequest.prototype._checkAuthParameters = function() {
+                    // by default assuming the authentication is not required
+                    this._options.forceAuth = false;
+                    var username = this._options.username || null;
+                    var password = this._options.password || null;
+                    // force the authentication if the username and password are supplied
+                    if ( typeof username === &#x27;string&#x27; &amp;&amp; typeof password === &#x27;string&#x27; ) {
+                        this._options.forceAuth = true;
+                    }
+                    return this._options.forceAuth;
+                }
+                
+                
+                /**
+                * Performs auth on the superagent request object if implied externally
+                *
+                * @private
+                * @method _auth
+                * @return {Object} The superagent request object by performing auth on it
+                */
+                BaseRequest.prototype._auth  = function(request) {
+                    if ( this._checkAuthParameters() ) {
+                        request.auth(this._options.username,this._options.password);
+                    }
+                    return request;
+                }
+                
+                
+                /**
+                * Renders the request path by using _path and _template
+                *
+                * @private
+                * @method _renderPath
+                * @return {String} The rendered path string
+                */
+                BaseRequest.prototype._renderPath = function() {
+                    var pathTemplate = new Route(this._template);
+                    var validatedPath = validatePath(this._path,this._pathValidators);
+                    return pathTemplate.reverse(validatedPath) || &#x27;&#x27;;
+                }
+                
+                
+                /**
+                * Renders the URI to request after checking for query parameters
+                *
+                * @private 
+                * @method _renderURI
+                * @return {String} The URI enpoint to request
+                */
+                BaseRequest.prototype._renderURI = function() {
+                    // Render the path to a string
+                    var path = this._renderPath();
+                    var queryStr = this._queryParams ? (&#x27;?&#x27; + this._renderQuery()) : &#x27;&#x27;;
+                    return this._options.endpoint + path + queryStr;
+                };
+                
+                
+                // HTTP methods
+                // ============
+                
+                /**
+                 * @method get
+                 * @async
+                 * @param {Function} [callback] A callback to invoke with the results of the GET request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.get = function(callback,transform) {
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;get&#x27;);
+                    var request = this._auth(agent.get(url));
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                /**
+                 * @method post
+                 * @async
+                 * @param {Object} data The post data
+                 * @param {Function} [callback] A callback to invoke with the results of the POST request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.post = function(data,callback,transform) {
+                    var request;
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;post&#x27;);
+                
+                    if ( typeof data === &#x27;undefined&#x27; || JSON.stringify(data) === &#x27;{}&#x27; )  { 
+                        data = {};
+                        request = this._auth(agent.post(url)).send(data); 
+                    } else {
+                        request = this._auth(agent.post(url)).send(data).type(&#x27;form&#x27;);
+                    }
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                /**
+                 * @method put
+                 * @async
+                 * @param {Object} data The put data
+                 * @param {Function} [callback] A callback to invoke with the results of the PUT request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.put = function(data,callback,transform) {
+                    var request;
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;put&#x27;);
+                
+                    if ( typeof data === &#x27;undefined&#x27; || JSON.stringify(data) === &#x27;{}&#x27; )  { 
+                        data = {};
+                        request = this._auth(agent.put(url)).send(data); 
+                    } else {
+                        request = this._auth(agent.put(url)).send(data).type(&#x27;form&#x27;);
+                    }
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                /**
+                 * @method patch
+                 * @async
+                 * @param {Object} data The patch data
+                 * @param {Function} [callback] A callback to invoke with the results of the PATCH request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.patch = function(data,callback,transform) {
+                    var request;
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;patch&#x27;);
+                
+                    if ( typeof data === &#x27;undefined&#x27; || JSON.stringify(data) === &#x27;{}&#x27; )  { 
+                        data = {};
+                        request = this._auth(agent.patch(url)).send(data); 
+                    } else {
+                        request = this._auth(agent.patch(url)).send(data).type(&#x27;form&#x27;);
+                    }
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                /**
+                 * @method delete
+                 * @async
+                 * @param {Function} [callback] A callback to invoke with the results of the DELETE request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.delete = function(callback,transform) {
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;delete&#x27;);
+                    var request = this._auth(agent.del(url));
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                /**
+                 * @method head
+                 * @async
+                 * @param {Function} [callback] A callback to invoke with the results of the HEAD request
+                 * @param {Error|Object} callback.err Any errors encountered during the request
+                 * @param {Object} callback.result The response of the request 
+                 * @param {String} transform Flag to get the full response object by passing in identity
+                 * @return {Promise} A promise to the results of the HTTP request
+                 */
+                BaseRequest.prototype.head = function(callback,transform) {
+                    var url = this._renderURI();
+                    this._checkMethodSupport(&#x27;head&#x27;);
+                    var request = this._auth(agent.head(url));
+                
+                    if ( transform === &#x27;identity&#x27; )
+                        return invokeandPromisify(request,callback,identity);
+                    else
+                        return invokeandPromisify(request,callback,getBody);
+                }
+                
+                
+                module.exports = BaseRequest;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/shared/ApiRequest.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/shared/ApiRequest.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule ApiRequest
+                */
+                
+                var BaseRequest = require(&#x27;./BaseRequest&#x27;);
+                var lodash = require(&#x27;lodash&#x27;);
+                var qs = require(&#x27;qs&#x27;);
+                
+                
+                /**
+                * ApiRequest extends BaseRequest with custom properties and methods
+                * 
+                * @class ApiRequest
+                * @constructor
+                * @extends BaseRequest
+                * @param {Object} options  A hash of options for configuring the BaseRequest instance
+                * @param {String} options.endpoint  The endpoint URI to request
+                * @param {String} [options.username]  A username for authenticating API requests
+                * @param {String} [options.password]  A password for authenticating API requests
+                */
+                 function ApiRequest(options) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    /**
+                    * The object containing the query parameters
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _params
+                    * @default {}
+                    */
+                    this._params = {};
+                    
+                    /**
+                    * A boolean flag that is set when there are query parameters to be rendered 
+                    * 
+                    * @private
+                    * @type Boolean
+                    * @property _queryParams
+                    * @default false
+                    */
+                    this._queryParams = false;
+                 }
+                
+                
+                 ApiRequest.prototype = new BaseRequest();
+                
+                
+                 /**
+                 * Record query parameters to be rendered in the final URI
+                 * 
+                 * @method query
+                 * @param {String|Object} key The name of the query parameter or an object containing query parameters as key,val 
+                 *                            pairs repectively
+                 * @param {String|Array} [value] If the supplied key is a String, then value can be of type Array or String 
+                 * @return {Object} Returns the ApiRequest instance itself if the arguments are in the required form else throw an Error
+                 * @chainable
+                 */
+                ApiRequest.prototype.query = function(key,value) { 
+                    var that = this; 
+                    // key is supplied as String
+                    if ( lodash.isString(key) &amp;&amp; (lodash.isArray(value) || lodash.isString(value)) ) {
+                        this._params[key] = value;
+                    }
+                    // key is supplied as Object
+                    else if ( lodash.isObject(key) &amp;&amp; !value ) { 
+                        lodash.each(key,function(v,k) {
+                            if ( lodash.isArray(v) || lodash.isString(v) ) {
+                                that._params[k] = v;
+                            }
+                            else {
+                                throw new Error(
+                                    &quot;Unsupported object supplied, keys should be of type String and Value should be of type String/Array.&quot;
+                                );
+                            }
+                        });
+                    }
+                    else {
+                        throw new Error(
+                            &#x27;Arguments not found in the required form.&#x27;
+                            );
+                    }
+                
+                    // if no error, means query parameters are set for rendering
+                    this._queryParams = true;
+                    return this;
+                 }
+                
+                
+                /**
+                * Compose query string by using the recorded query parameters
+                *
+                * @method _renderQuery
+                * @private
+                * @return {String} Returns the query string to be appended in the final URI
+                */
+                ApiRequest.prototype._renderQuery = function() {
+                    var queryParams = this._params;
+                    // sorting is done to probably cache the URIs
+                    var queryString = qs.stringify(this._params)
+                        .split( &#x27;&amp;&#x27; )
+                        .sort()
+                        .join( &#x27;&amp;&#x27; );
+                
+                    return queryString;
+                }
+                
+                
+                module.exports = ApiRequest;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/List.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/List.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule List
+                */
+                
+                var lodash = require(&#x27;lodash&#x27;);
+                var ApiRequest = require(&#x27;./shared/ApiRequest.js&#x27;);
+                var Member = require(&#x27;./Member.js&#x27;);
+                var Page = require(&#x27;./Page.js&#x27;);
+                var Settings = require(&#x27;./Settings.js&#x27;);
+                var ListArchivers = require(&#x27;./ListArchivers.js&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                
+                /**
+                * List extends ApiRequest to perform operations on the list resource
+                * 
+                * @constructor
+                * @class List
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the List instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                * @param {String} url Location of the list resource on the server
+                */
+                function List(options,url) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    /**
+                    * URL of the list resource 
+                    *
+                    * @private
+                    * @type String
+                    * @property _url
+                    */
+                    this._url = url;
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;,&#x27;delete&#x27;]
+                    */
+                    this._supportedMethods = [&#x27;get&#x27;,&#x27;post&#x27;,&#x27;delete&#x27;,&#x27;put&#x27;];
+                
+                    /**
+                    * Object containing the resource information, will be null if getInfo() is never called
+                    *
+                    * @private
+                    * @type {Object}
+                    * @default null
+                    * @property _info
+                    */
+                    this._info = null;
+                
+                    /** 
+                    * Root template string for the list resource used to compose the _template value
+                    * 
+                    * @property _rootTemplate
+                    * @type String
+                    * @private
+                    */
+                    this._rootTemplate = this._url.split(this._options.endpoint)[1];
+                
+                    /**
+                    * The URI template used to generate the URI to request 
+                    *
+                    * @private
+                    * @type String
+                    * @property _template
+                    */
+                    this._template = this._rootTemplate;
+                
+                    /**
+                    * Keys of the _info object
+                    *
+                    * @private
+                    * @type Array
+                    * @property _keys
+                    * @default []
+                    */
+                    this._keys = [];
+                
+                    /**
+                    * Object containing request path variables used to assemble the request URI
+                    *
+                    * @property _path
+                    * @type Object
+                    * @private
+                    * @default {}
+                    */
+                    this._path = {};
+                }
+                
+                
+                List.prototype = new ApiRequest();
+                
+                
+                /**
+                * Fetch the resource by making a HTTP GET request and calls the callback(if any), and provide a 
+                * promise to the Domain object itself
+                * 
+                * @method getInfo
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List object itself
+                * @return {Promise} Promise to the List object itself
+                */
+                List.prototype.getInfo = function(callback) {
+                    this._template = this._rootTemplate;
+                    if ( !this._info ) {
+                        var that = this;
+                        return that.get().then(function(data) {
+                                        that._info = data;
+                                        that._keys = Object.keys(data);
+                                        that._setAccessors();
+                                        return utils.promisify(that,callback);
+                                    }).catch(function(e) {
+                                        console.error(e);
+                                    });
+                    } else {
+                        return utils.promisify(this,callback);
+                    }
+                }
+                
+                
+                /**
+                * Set the accessors on the object for the resource information i.e _info object
+                *
+                * @method _setAccessors
+                * @private
+                */
+                List.prototype._setAccessors = function() {
+                    /**
+                    * The fully qualified list name
+                    *
+                    * @property fqdn_listname
+                    * @type String
+                    */
+                
+                    /**
+                    * The mail host of the list
+                    *
+                    * @property mail_host
+                    * @type String
+                    */
+                
+                    /**
+                    * The list identifier
+                    *
+                    * @property list_id
+                    * @type String
+                    */
+                
+                    /**
+                    * Name of the list
+                    *
+                    * @property list_name
+                    * @type String
+                    */
+                
+                    /**
+                    * Display name of the list
+                    *
+                    * @property display_name
+                    * @type String
+                    */
+                    var that = this;
+                    that._keys.forEach(function(key) {
+                        Object.defineProperty(that,key, {
+                            get : function() {
+                                if ( key in that._info )
+                                    return that._info[key];
+                            },
+                            configurable : true
+                        });
+                    });
+                }
+                
+                
+                /**
+                * Provides an array of Member instances that are list owners
+                *
+                * @method getOwners
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with an array of Member instances
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Member instances
+                * @return {Promise} Promise to an array of Member instances
+                */
+                List.prototype.getOwners = function(callback) {
+                    var that = this;
+                    that._template = that._rootTemplate + &#x27;/roster/owner&#x27;;
+                    var items = [];
+                    return that.get().then(function(resp) {
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new Member(that._options,entry.self_link));
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides an array of Member instances that are list moderators
+                *
+                * @method getModerators
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with an array of Member instances
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Member instances
+                * @return {Promise} Promise to an array of Member instances
+                */
+                List.prototype.getModerators = function(callback) {
+                    var that = this;
+                    that._template = that._rootTemplate + &#x27;/roster/moderator&#x27;;
+                    var items = [];
+                    return that.get().then(function(resp) {
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new Member(that._options,entry.self_link));
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides an array of Member instances that are list members
+                *
+                * @method getMembers
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with an array of Member instances
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Member instances
+                * @return {Promise} Promise to an array of Member instances
+                */
+                List.prototype.getMembers = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/&#x27; + that.fqdn_listname + &#x27;/roster/member&#x27;;
+                                    return that.get();
+                                }).then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in  resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new Member(that._options,entry.self_link));
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides an array of Member instances that are non-members of the list
+                *
+                * @method getNonMembers
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with an array of Member instances
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Member instances
+                * @return {Promise} Promise to an array of Member instances
+                */
+                List.prototype.getNonMembers = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/members/find&#x27;;
+                                    var data = {
+                                        &#x27;role&#x27; : &#x27;nonmember&#x27;,
+                                        &#x27;list_id&#x27; : that.list_id
+                                    }
+                                    return that.post(data);
+                                }).then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        items.push(new Member(that._options,entry.self_link));
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides a paging interface to the list members
+                *
+                * @method getMemberPage
+                * @async
+                * @param {Number} count Number of items on a page
+                * @param {Page} page Number of pages to be requested
+                * @param {Function} [callback] The callback function to be invoked with a Page instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result A Page instance
+                * @return {Promise} Promise to a Page instance
+                */
+                List.prototype.getMemberPage = function(count,page,callback) {
+                    if ( typeof page === &#x27;undefined&#x27; )      { page = 1 };
+                    if ( typeof count === &#x27;undefined&#x27; )     { count = 50 };
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    var endpoint = &#x27;/lists/&#x27; + that.fqdn_listname + &#x27;/roster/member&#x27;;
+                                    return utils.promisify(
+                                        new Page(that._options,endpoint,Member,count,page),
+                                        callback
+                                        );
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides the list settings, i.e the Settings instance corresponding to the List instance
+                *
+                * @method getSettings
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with a Settings instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result A Settings instance
+                * @return {Promise} Promise to a Settings instance
+                */
+                List.prototype.getSettings = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    var endpoint = &#x27;/lists/&#x27; + that.fqdn_listname + &#x27;/config&#x27;;
+                                    return utils.promisify(new Settings(that._options,endpoint));
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides an array of objects describing the held messages information
+                * 
+                * @async
+                * @method getHeldMesssages
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of objects describing the held messages
+                * @return {Promise} Promise to an array of objects describing the held messages
+                */
+                List.prototype.getHeldMessages = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/(:fqdn_listname)/held&#x27;;
+                                    that._path.fqdn_listname = that.fqdn_listname;
+                                    return that.get();
+                                }).then(function(resp) {
+                                    var msgEntries = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            msgEntries.push({
+                                                hold_date : enrty.hold_date,
+                                                msg : entry.msg,
+                                                reason : entry.reason,
+                                                sender : entry.sender,
+                                                request_id : entry.request_id,
+                                                subject : entry.subject
+                                            });
+                                        });
+                                    }
+                                    return utils.promisify(msgEntries,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides an array of objects describing the list subscriptions requests
+                * 
+                * @async
+                * @method getHeldMesssages
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of objects describing the list subscriptions requests
+                * @return {Promise} Promise to an array of objects describing the list subscriptions requests
+                */
+                List.prototype.getSubscriptionRequests = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/(:fqdn_listname)/requests&#x27;;
+                                    that._path.fqdn_listname = that.fqdn_listname;
+                                    return that.get();
+                                }).then(function(resp) {
+                                    var subscriptionRequests = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            subscriptionRequests.push({
+                                                email : entry.email,
+                                                token : entry.token,
+                                                token_owner : entry.token_owner,
+                                                list_id : entry.list_id,
+                                                request_date : entry.when
+                                            });
+                                        });
+                                    }
+                                        return utils.promisify(subscriptionRequests,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Take actions on a subscription request i.e accept|reject|discard|defer it
+                *
+                * @async
+                * @method manageRequest
+                * @param {String} token The token identifier for the subscription request
+                * @param {String} action Action to take on the list, accept|reject|discard|defer
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of objects describing the list subscriptions requests
+                * @return {Promise} Promise to an array of objects describing the list subscriptions requests
+                */
+                List.prototype.manageRequest = function(token,action,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/&#x27; + that.list_id + &#x27;/requests/&#x27; + token;
+                                    var payload = { action : action };
+                                    return that.post(payload);
+                                }).then(function() {
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * The ListArchivers instance corresponding to the List instance
+                *
+                * @async
+                * @method getArchivers
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The ListArchivers instance
+                * @return {Promise} Promise to the ListArchivers instance
+                */
+                List.prototype.getArchivers = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    return utils.promisify(
+                                        new ListArchivers(that._options,that.list_id),
+                                        callback
+                                    );
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Assign a role to an address corresponding to a list
+                * 
+                * @async
+                * @method addRole
+                * @param {String} role The role to be assigned, owner,moderator etc.
+                * @param {String} address The email address
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.addRole = function(role,address,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    var payload = {
+                                        list_id : that.list_id,
+                                        subscriber : address,
+                                        role : role
+                                    };
+                                    that._template = &#x27;/members&#x27;;
+                                    return that.post(payload);
+                                }).then(function() {
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Add a list onwer
+                * 
+                * @async
+                * @method addOwner
+                * @param {Function} address The email address of the owner
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.addOwner = function(address,callback) {
+                    return this.addRole(&#x27;owner&#x27;,address,callback);
+                }
+                
+                
+                /**
+                * Add a list moderator
+                * 
+                * @async
+                * @method addModerator
+                * @param {Function} address The email address of the moderator
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.addModerator = function(address,callback) {
+                    return this.addRole(&#x27;moderator&#x27;,address,callback);
+                }
+                
+                
+                /**
+                * Remove an address from a role
+                *
+                * @async
+                * @method removeRole
+                * @param {String} role The role from which the address is to be removed
+                * @param {String} address The address which is to be removed
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.removeRole = function(role,address,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/(:fqdn_listname)/(:role)/(:address)&#x27;;
+                                    var pathVars = {
+                                        fqdn_listname : that.fqdn_listname,
+                                        role : role,
+                                        address : address
+                                    };
+                                    lodash.extend(that._path,pathVars);
+                                    return that.delete();
+                               }).then(function() {
+                                    return utils.promisify(that,callback);
+                               }).catch(function(e) {
+                                    console.error(e);
+                               });
+                }
+                
+                
+                /**
+                * Remove a list moderator
+                *
+                * @async
+                * @method removeModerator
+                * @param {String} address The address of the moderator
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.removeModerator = function(address,callback) {
+                    return this.removeRole(&#x27;moderator&#x27;,address,callback);
+                }
+                
+                
+                /**
+                * Remove a list owner
+                *
+                * @async
+                * @method removeOnwer
+                * @param {String} address The address of the list owner
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.removeOwner = function(address,callback) {
+                    return this.removeRole(&#x27;owner&#x27;,address,callback);
+                }
+                
+                
+                /**
+                * Moderate a held message
+                * 
+                * @async
+                * @method moderateMessage
+                * @param {String} requestId Identifier describing the held message
+                * @param {String} action The action to take on the held message, viz. defer|accept|reject|discard
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.moderateMessage = function(requestId,action,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/(:fqdn_listname)/held/(:requestId)&#x27;;
+                                    var pathVars = {
+                                        requestId : requestId,
+                                        fqdn_listname : that.fqdn_listname
+                                    };
+                                    lodash.extend(that._path,pathVars);
+                                    return that.post({action : action});
+                                }).then(function(resp) {
+                                    return utils.promisify(resp,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                // ========== Shortcuts for moderateMessage ================
+                
+                /**
+                * Discard a held message
+                * 
+                * @async
+                * @method discardMessage
+                * @param {String} requestId Identifier describing the held message
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.discardMessage = function(requestId,callback) {
+                    return this.moderateMessage(requestId,&#x27;discard&#x27;,callback);
+                }
+                
+                
+                /**
+                * Reject a held message
+                * 
+                * @async
+                * @method rejectMessage
+                * @param {String} requestId Identifier describing the held message
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.rejectMessage = function(requestId,callback) {
+                    return this.moderateMessage(requestId,&#x27;reject&#x27;,callback);
+                }
+                
+                
+                /**
+                * Defer a held message
+                * 
+                * @async
+                * @method deferMessage
+                * @param {String} requestId Identifier describing the held message
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.deferMessage = function(requestId,callback) {
+                    return this.moderateMessage(requestId,&#x27;defer&#x27;,callback);
+                }
+                
+                
+                /**
+                * Accept a held message
+                * 
+                * @async
+                * @method acceptMessage
+                * @param {String} requestId Identifier describing the held message
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.acceptMessage = function(requestId,callback) {
+                    return this.moderateMessage(requestId,&#x27;accept&#x27;,callback);
+                }
+                
+                
+                /**
+                * Moderate a subscription request
+                * 
+                * @async
+                * @method moderateRequest
+                * @param {String} requestId Identifier describing the subscription request
+                * @param {String} action The action to take on the subscription request, viz. defer|accept|reject|discard
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.moderateRequest = function(requestId,action,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/(:list_id)/requests/(:requestId)&#x27;;
+                                    var pathVars = {
+                                        list_id : that.list_id,
+                                        requestId : requestId
+                                    };
+                                    lodash.extend(that._path,pathVars);
+                                    return that.post({action : action});
+                                }).then(function(resp) {
+                                   return utils.promisify(resp,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }       
+                
+                // ========== Shortcuts for moderateRequest ================
+                
+                /**
+                * Reject a subscription request
+                * 
+                * @async
+                * @method rejectRequest
+                * @param {String} requestId Identifier describing the subscription request
+                * @param {String} action The action to take on the subscription request
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.rejectRequest = function(requestId,callback) {
+                    return this.moderateRequest(requestId,&#x27;reject&#x27;,callback);
+                }
+                
+                /**
+                * Accept a subscription request
+                * 
+                * @async
+                * @method acceptRequest
+                * @param {String} requestId Identifier describing the subscription request
+                * @param {String} action The action to take on the subscription request
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.acceptRequest = function(requestId,callback) {
+                    return this.moderateRequest(requestId,&#x27;accept&#x27;,callback);
+                }
+                
+                
+                /**
+                * Discard a subscription request
+                * 
+                * @async
+                * @method discardRequest
+                * @param {String} requestId Identifier describing the subscription request
+                * @param {String} action The action to take on the subscription request
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.discardRequest = function(requestId,callback) {
+                    return this.moderateRequest(requestId,&#x27;discard&#x27;,callback);
+                }
+                
+                
+                /**
+                * Defer a subscription request
+                * 
+                * @async
+                * @method deferRequest
+                * @param {String} requestId Identifier describing the subscription request
+                * @param {String} action The action to take on the subscription request
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The request response
+                * @return {Promise} Promise to the request response
+                */
+                List.prototype.deferRequest = function(requestId,callback) {
+                    return this.moderateRequest(requestId,&#x27;defer&#x27;,callback);
+                }
+                
+                
+                /**
+                * Get a list member by it&#x27;s email address, it not found throw an Error
+                *
+                * @async
+                * @method getMemberByEmail
+                * @param {String} email The email address of the list member
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Member instance
+                * @return {Promise} Promise to the Member instance
+                */
+                List.prototype.getMemberByEmail = function(email,callback) {
+                    var that = this;
+                    return new utils.Promise(function(resolve,reject) {
+                        that.getMembers().then(function(members) {
+                                    var numMembers = members.length;
+                                    var loopcount = 0;
+                                    members.forEach(function(member) {
+                                        member.getInfo().then(function() {
+                                            loopcount++;
+                                            if ( member.email === email ) {
+                                                resolve(member);
+                                            }
+                                            else if  ( loopcount === numMembers ) {
+                                                reject(new Error(email + &#x27; is not a member of &#x27; + that.fqdn_listname));
+                                            }
+                                        }); // .getInfo()
+                                    });  
+                            }).catch(function(e) {
+                                console.error(e);
+                            }); // .getMembers()
+                    }).nodeify(callback || utils.noop);
+                }
+                
+                
+                /**
+                * Subscribe an email address to the list and provide the created Member instance
+                *
+                * @async
+                * @method subscribe
+                * @param {String} address The email address to be subscribed to the list
+                * @param {String} displayName The display name of the adddress
+                * @param {Boolean} preVerified Addeess is pre verified or not
+                * @param {Boolean} preConfirmed Address is pre confirmed or not
+                * @param {Boolean} preConfirmed Address is pre approved or not
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Member instance
+                * @return {Promise} Promise to the Member instance
+                */
+                List.prototype.subscribe = function(address,displayName,preVerified,
+                                                    preConfirmed,preApproved,callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    preVerified = preVerified || true;
+                                    preConfirmed = preConfirmed || true;
+                                    preApproved = preApproved || true;
+                                    var payload = {
+                                        list_id : that.list_id,
+                                        subscriber : address,
+                                        display_name : displayName
+                                    };
+                                    if (preVerified) { payload.pre_verified = true; } 
+                                    if (preConfirmed) { payload.pre_confirmed = true; }
+                                    if (preApproved) { payload.pre_approved = true; }
+                                    that._template = &#x27;/members&#x27;;
+                                    // get the raw response
+                                    return that.post(payload,null,&#x27;identity&#x27;);
+                                }).then(function(resp) {
+                                    if ( resp.statusCode === 202 )
+                                        return utils.promisify(response.body,callback);
+                                    else
+                                        return utils.promisify(new Member(that._options,resp.req.res.headers.location));
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Unsubscribe an email address from the list, in case the address is not already subscribed expect it to throw
+                *
+                * @async
+                * @method unsubscribe
+                * @param {String} email The email address to be unsubscribed 
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.unsubscribe = function(email,callback) {
+                    var that = this;
+                    return new utils.Promise(function(resolve,reject) {
+                        that.getMembers().then(function(members) {
+                                var numMembers = members.length;
+                                var loopcount = 0;
+                                members.forEach(function(member) {
+                                    member.getInfo().then(function(memberObj) {
+                                            loopcount++;
+                                            if ( member.email == email ) {
+                                                that._template = member.self_link;
+                                                member.unsubscribe().then(function(){
+                                                    resolve(that);
+                                                });
+                                            }
+                                            else if ( loopcount === numMembers ) {
+                                                reject(new Error(email + &#x27; is not a member address of &#x27; + that.fqdn_listname));
+                                            }
+                                    }); // .getInfo()
+                                }); 
+                        }).catch(function(e) {
+                            console.error(e);
+                        }); // .getMembers()
+                    }).nodeify(callback || utils.noop);
+                }
+                
+                
+                /**
+                * Delete the mailing list 
+                *
+                * @async
+                * @method deleteList
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                List.prototype.deleteList = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._template = &#x27;/lists/&#x27; + that.fqdn_listname;
+                                    return that.delete();
+                                }).then(function() {
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Returns the string representation of the List instance
+                *
+                * @method toString
+                * @return {String} Returns the string representation of the List instance
+                */
+                List.prototype.toString = function() {
+                    return &#x27;&lt;List &#x27; + this.fqdn_listname + &#x27; &gt;&#x27;;
+                }
+                
+                
+                module.exports = List;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

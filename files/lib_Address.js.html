@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/Address.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/Address.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule Address
+                */
+                
+                var ApiRequest = require(&#x27;./shared/ApiRequest.js&#x27;);
+                var Preferences = require(&#x27;./Preferences.js&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                
+                /**
+                * Address extends ApiRequest to perform operations on the address resource
+                *
+                * @class Address
+                * @constructor
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the Address instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                * @param {Object} address A hash of address object containing the location of the resource on the server
+                 */
+                function Address(options,address) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;,&#x27;post&#x27;]
+                    */
+                    this._supportedMethods = [&#x27;get&#x27;,&#x27;post&#x27;];
+                
+                    /**
+                    * Associated email address corresponding Address object
+                    *
+                    * @property email
+                    * @type String
+                    * @private
+                    */
+                    this.email = address.email;
+                
+                    /**
+                    * Resource URL
+                    *
+                    * @property _url
+                    * @type String
+                    * @private
+                    */
+                    this._url = address.self_link;
+                    
+                    /**
+                    * The URI template used to generate the URI to request 
+                    *
+                    * @private
+                    * @property _template
+                    * @type String
+                    * @default &#x27;&#x27;
+                    */
+                    this._template = &#x27;&#x27;;
+                
+                    /**
+                    * Object containing request path variables used to assemble the request URI
+                    *
+                    * @property _path
+                    * @type Object
+                    * @private
+                    * @default {}
+                    */
+                    this._path = {};
+                
+                    /**
+                    * Object containing the resource information, will be null if getInfo() is never called
+                    *
+                    * @private
+                    * @type {Object}
+                    * @default null
+                    * @property _info
+                    */
+                    this._info = null;
+                
+                    /**
+                    * Keys of the _info object
+                    *
+                    * @private
+                    * @type Array
+                    * @property _keys
+                    * @default []
+                    */
+                    this._keys = [];
+                
+                }
+                
+                
+                Address.prototype  = new ApiRequest();
+                
+                
+                /**
+                * Fetch the resource by making a HTTP GET request and calls the callback(if any), and provide a 
+                * promise to the Address object itself
+                * 
+                * @method getInfo
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Address object itself
+                * @return {Promise} Promise to the Address object itself
+                */
+                Address.prototype.getInfo = function(callback) {
+                    this._template = this._url.split(this._options.endpoint)[1];
+                    if ( !this._info ) {
+                        var that = this;
+                        return that.get().then(function(data) {
+                                        that._info = data;
+                                        that._keys = Object.keys(that._info);
+                                        that._setAccessors();
+                                        return utils.promisify(that,callback);
+                                    }).catch(function(e) {
+                                        console.error(e);
+                                    });
+                    }
+                    else {
+                        return utils.promisify(this,callback);
+                    }
+                }
+                
+                
+                /**
+                * Set the accessors on the object for the resource information i.e _info object
+                *
+                * @method _setAccessors
+                * @private
+                */
+                Address.prototype._setAccessors = function() {
+                    /**
+                    * Display name of the address
+                    *
+                    * @property display_name
+                    * @type String
+                    */
+                
+                    /**
+                    * Registration timestamp of the address
+                    *
+                    * @property registered_on
+                    * @type String
+                    */
+                
+                    /** 
+                    * Verification timestamp of the address
+                    *
+                    * @property verified_on
+                    * @type String
+                    */
+                    
+                    if ( this._keys.length != 0 ) {
+                        this._keys.forEach( (function(key) {
+                
+                            Object.defineProperty(this,key,{
+                
+                                get : function() {
+                                    if ( key in this._info )
+                                        return this._info[key];
+                                    else 
+                                        throw new Error(&#x27;KeyError : key not found in the address hashmap&#x27;);
+                                },
+                
+                                configurable : true
+                            });
+                
+                        }).bind(this)
+                
+                        );
+                
+                        /**
+                        * Getter for the Preferences instance corresponding to the current Address instance
+                        * 
+                        * @property preferences
+                        * @type Preferences
+                        */
+                        Object.defineProperty(this,&#x27;preferences&#x27;,{
+                            get : function() {
+                                var endpoint = &#x27;/addresses/&#x27; + this.email + &#x27;/preferences&#x27;;
+                                return new Preferences(this._options,endpoint);
+                            },
+                            configurable : true
+                        });
+                    } 
+                    else {
+                        throw new Error(&#x27;getInfo() should be called first&#x27;);
+                    }
+                }
+                
+                
+                /**
+                * Verify the address and calls the callback(if any), and provide a 
+                * promise to the Address object itself
+                *
+                * @method verify
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Address object itself
+                * @return {Promise} Promise to the Address object itself
+                */
+                Address.prototype.verify = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/addresses/(:email)/verify&#x27;;
+                    that._path.email = that.email;
+                    return that.post().then(function(data) {
+                                    that._info = null;
+                                    return that.getInfo(callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Verify the address and calls the callback(if any), and provide a 
+                * promise to the Address object itself
+                *
+                * @method unverify
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Address object itself
+                * @return {Promise} Promise to the Address object itself
+                */
+                Address.prototype.unverify = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/addresses/(:email)/unverify&#x27;;
+                    that._path.email = that.email;
+                    return that.post().then(function(data) {
+                                    that._info = null;
+                                    return that.getInfo(callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * String representation of the Address object
+                * 
+                * @method toString
+                * @return {String} Associated email address to the Address object
+                */
+                Address.prototype.toString = function() {
+                    return this.email;
+                }
+                
+                
+                module.exports = Address;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

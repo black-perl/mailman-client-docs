@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/Client.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/Client.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /*
+                    Client module
+                */
+                
+                var ApiRequest = require(&#x27;./shared/ApiRequest.js&#x27;);
+                var Preferences = require(&#x27;./Preferences.js&#x27;);
+                var User = require(&#x27;./User.js&#x27;);
+                var Domain = require(&#x27;./Domain.js&#x27;);
+                var Address = require(&#x27;./Address.js&#x27;);
+                var List = require(&#x27;./List.js&#x27;);
+                var Member = require(&#x27;./Member.js&#x27;);
+                var Page = require(&#x27;./Page.js&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                
+                /**
+                * Client extends ApiRequest to serve as the entry point for the Mailman Client API
+                * 
+                * @constructor
+                * @class Client
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the Client instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                */
+                function Client(options) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    this._setAccessors();
+                }
+                
+                
+                Client.prototype = new ApiRequest();
+                
+                
+                /**
+                * Provides the system versions information
+                * 
+                * @async
+                * @method getVersions
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The system version information
+                * @return {Promise} Promise to the system version information
+                */
+                Client.prototype.getVersions = function(callback) {
+                    this._template = &#x27;/system/versions&#x27;;
+                    return this.get().then(function(resp) {
+                                    return utils.promisify(resp,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Set the accessors on the Client instance
+                *
+                * @private
+                * @method _setAccessors
+                */
+                Client.prototype._setAccessors = function() {
+                    /**
+                    * Preferences object representing the system preferences
+                    *
+                    * @private
+                    * @property preferences
+                    * @type Preferences
+                    */
+                    var that = this;
+                    Object.defineProperty(this,&#x27;preferences&#x27;,{
+                        get : function() {
+                            return new Preferences(that._options,&#x27;/system/preferences&#x27;);
+                        }
+                    });
+                }
+                
+                
+                /**
+                * Calls the callback(if any) or provide a promise to an array of List instances
+                * 
+                * @method getLists
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of List instances
+                * @return {Promise} Promise to an array of List instances
+                */
+                Client.prototype.getLists = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/lists&#x27;;
+                    return that.get().then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new List(that._options,entry.self_link));
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides a paging interface to the lists
+                *
+                * @method getListPage
+                * @async
+                * @param {Number} count Number of items on a page
+                * @param {Page} page Number of pages to be requested
+                * @param {Function} [callback] The callback function to be invoked with a Page instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result A Page instance
+                * @return {Promise} Promise to a Page instance
+                */
+                Client.prototype.getListPage = function(count,page) {
+                    if ( typeof count === &#x27;undefined&#x27; ) { count = 50 };
+                    if ( typeof page === &#x27;undefined&#x27; ) { count = 1 };
+                    return new Page(this._options,&#x27;/lists&#x27;,List,count,page);
+                }
+                
+                
+                /**
+                * Calls the callback(if any) or provide a promise to an array of Domain instances
+                * 
+                * @method getDomains
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Domain instances
+                * @return {Promise} Promise to an array of Domain instances
+                */
+                Client.prototype.getDomains = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/domains&#x27;;
+                    return that.get().then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new Domain(that._options,entry.self_link));
+                                        })
+                                        items.sort(function(x,y) {
+                                            return (x &gt; y) - (x &lt; y);
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Calls the callback(if any) or provide a promise to an array of Member instances
+                * 
+                * @method getMembers
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Members instances
+                * @return {Promise} Promise to an array of Member instances
+                */
+                Client.prototype.getMembers = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/members&#x27;;
+                    return that.get().then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new Member(that._options,entry.self_link));
+                                        });
+                                    }
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides a paging interface to the lists
+                *
+                * @method getMemberPage
+                * @async
+                * @param {Number} count Number of items on a page
+                * @param {Page} page Number of pages to be requested
+                * @param {Function} [callback] The callback function to be invoked with a Page instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result A Page instance
+                * @return {Promise} Promise to a Page instance
+                */
+                Client.prototype.getMemberPage = function(count,page) {
+                    if ( typeof count === &#x27;undefined&#x27; )     { count = 50 };
+                    if ( typeof page === &#x27;undefined&#x27; )      { page = 1 };
+                    return new Page(this._options,&#x27;/members&#x27;,Member,count,page);
+                }   
+                
+                
+                /**
+                * Calls the callback(if any) or provide a promise to an array of User instances
+                * 
+                * @method getUsers
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of User instances
+                * @return {Promise} Promise to an array of User instances
+                */
+                Client.prototype.getUsers = function(callback) {
+                    var that = this;
+                    that._template = &#x27;/users&#x27;;
+                    return that.get().then(function(resp) {
+                                    var items = [];
+                                    if ( &#x27;entries&#x27; in resp ) {
+                                        resp.entries.forEach(function(entry) {
+                                            items.push(new User(that._options,entry.self_link));    
+                                        });
+                                    }
+                                    items.sort(function(x,y) {
+                                        return (x &gt; y) - (x &lt; y);
+                                    });
+                                    return utils.promisify(items,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Provides a paging interface to the users
+                *
+                * @method getUserPage
+                * @async
+                * @param {Number} count Number of items on a page
+                * @param {Page} page Number of pages to be requested
+                * @param {Function} [callback] The callback function to be invoked with a Page instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result A Page instance
+                * @return {Promise} Promise to a Page instance
+                */
+                Client.prototype.getUserPage = function(count,page) {
+                    if ( typeof count === &#x27;undefined&#x27; )     { count = 50 };
+                    if ( typeof page === &#x27;undefined&#x27; )      { page = 1 };
+                    return new Page(this._options,&#x27;/users&#x27;,User,count,page);
+                }
+                
+                
+                /**
+                * Create a domain and call the callback(if any) or provide a promise to the Domain instance
+                *
+                * @async
+                * @method createDomain
+                * @param {String} mailHost The mail host 
+                * @param {String} [baseURL] The base URL of the mail host
+                * @param {String} [description] Description about the domain
+                * @param {String} [owner] Email of the domain owner
+                * @param {Function} [callback] The callback function to be invoked with the created Domain instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The created Domain instance
+                * @return {Promise} Promise to the created Domain instance
+                */
+                Client.prototype.createDomain = function(mailHost,baseURL,description,owner,callback) {
+                    var payload = { mail_host : mailHost };
+                
+                    if ( typeof baseURL === &#x27;undefined&#x27; )       { baseURL = null; } 
+                    else    { payload.base_url = baseURL; }
+                
+                    if ( typeof description === &#x27;undefined&#x27; )       { description = null; }
+                    else    { payload.description = description; }
+                
+                    if ( typeof owner === &#x27;undefined&#x27; )     { owner = null; }
+                    else    { payload.owner = owner; }
+                
+                    var that = this;
+                    that._template = &#x27;/domains&#x27;;
+                    return that.post(payload,null,&#x27;identity&#x27;).then(function(resp) {
+                                    var domainObj = new Domain(that._options,resp.headers.location);
+                                    return utils.promisify(domainObj,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Delete a domain
+                *
+                * @async
+                * @method deleteDomain
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Client instance itself
+                * @return {Promise} Promise to the Client instance itself
+                */
+                Client.prototype.deleteDomain = function(mailHost,callback) {
+                    var that = this;
+                    that._template = &#x27;/domains/&#x27; + mailHost;
+                    return that.delete().then(function() {
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                /**
+                * Get a domain by it&#x27;s web host name or mail host name, call the provided callback(if any)
+                * with the Domain instance or provide a promise to it
+                *
+                * @async
+                * @method getDomain
+                * @param {String} mailHost The mail host of the domain
+                * @param {String} webHost The web host of the domain
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Domain instance
+                * @return {Promise} Promise to the Domain instance
+                */
+                Client.prototype.getDomain = function(mailHost,webHost,callback) {
+                    if ( typeof mailHost === &#x27;undefined&#x27; )   { mailHost = null };
+                    if ( typeof webHost === &#x27;undefined&#x27; )   { webHost = null };
+                
+                    var that = this;
+                    if ( mailHost ) {
+                        that._template = &#x27;/domains/&#x27; + mailHost;
+                        return that.get().then(function(resp) {
+                                        return new Domain(that._options,resp.self_link);
+                                    }).then(function(domain) {
+                                        return domain.getInfo();
+                                    }).catch(function(e) {
+                                        console.error(e);
+                                    });
+                    }
+                    else if ( webHost ) {
+                        return new utils.Promise(function(resolve,reject) {
+                            that.getDomains().then(function(domains) {
+                                        var numDomains = domains.length;
+                                        var loopcount = 0;
+                                        domains.forEach(function(domain) {
+                                            domain.getInfo().then(function() {
+                                                loopcount++;
+                                                if ( domain.base_url === webHost ) {
+                                                    resolve(domain);
+                                                }
+                                                else if ( loopcount === numDomains ) {
+                                                    resolve(null);
+                                                }
+                                            }); // getInfo
+                                        }); // forEach
+                                    }).catch(function(e) {
+                                        console.error(e);
+                                    }); // getDomains
+                        }).nodeify(callback || utils.noop);
+                    }
+                }
+                
+                
+                /**
+                * Create a mailman user and call the callback(if any) with the User instance or provide a promise to it
+                *
+                * @async
+                * @method createUser 
+                * @param {String} email The email address of the user
+                * @param {String} password A password string
+                * @param {String} displayName The display name of the user
+                * @return {Promise} Returns a promise to the created User instance
+                */
+                Client.prototype.createUser = function(email,password,displayName,callback) {
+                    var that = this;
+                    if ( typeof displayName === &#x27;undefined&#x27; )       { displayName = &#x27;&#x27; };
+                    that._template = &#x27;/users&#x27;;
+                    var payload = {
+                        email : email,
+                        password : password,
+                        display_name : displayName
+                    };
+                    return that.post(payload,null,&#x27;identity&#x27;).then(function(resp) {
+                                    var userObj = new User(that._options,resp.headers.location);
+                                    return utils.promisify(userObj,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }   
+                
+                
+                /**
+                * Get a user by it&#x27;s associated email address and call the callback(if any) with the User instance or
+                * provide a promise to it
+                *
+                * @async
+                * @method getUser
+                * @param {String} email The email address of the user
+                * @param {Function} [callback] The callback function to be invoked with the created Domain instance
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The User instance
+                * @return {Promise} Promise to the User instance
+                */
+                Client.prototype.getUser = function(email,callback) {
+                    var that = this;
+                    that._template = &#x27;/users/&#x27; + email;
+                    return that.get().then(function(resp) {
+                                    var userObj = new User(that._options,resp.self_link);
+                                    return utils.promisify(userObj,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Get an address by it&#x27;s associated email address and call the callback(if any) with the Address instance or
+                * provide a promise to it
+                *
+                * @async
+                * @method getAddress
+                * @param {String} email The associated email address
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Address instance
+                * @return {Promise} Promise to the Address instance
+                */
+                Client.prototype.getAddress = function(email,callback) {
+                    var that = this;
+                    that._template = &#x27;/addresses/&#x27; + email;
+                    return that.get().then(function(resp) {
+                                    var addressObj = new Address(that._options,resp);
+                                    return utils.promisify(addressObj,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Get a list by it&#x27;s fqdn listname (fully qualified domain name) and call the callback(if any) 
+                * with the List instance or provide a promise to it
+                *
+                * @async
+                * @method getList
+                * @param {String} fqdnListname The fully qualified domian name of the list
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                Client.prototype.getList = function(fqdnListname,callback) {
+                    var that = this;
+                    that._template = &#x27;/lists/&#x27; + fqdnListname;
+                    return that.get().then(function(resp) {
+                                    var listObj = new List(that._options,resp.self_link);
+                                    return utils.promisify(listObj,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Delete a list by it&#x27;s fqdn listname (fully qualified domain name) and call the callback(if any) 
+                * with the Client instance or provide a promise to it
+                *
+                * @async
+                * @method deleteList
+                * @param {String} fqdnListname The fully qualified domian name of the list
+                * @param {Function} [callback] The callback function to be invoked 
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The List instance
+                * @return {Promise} Promise to the List instance
+                */
+                Client.prototype.deleteList = function(fqdnListname,callback) {
+                    var that = this;
+                    that._template = &#x27;/lists/&#x27; + fqdnListname;
+                    return that.delete().then(function(resp) {
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * String representation of the Client instance
+                *
+                * @method toString
+                * @return {String} Return the string representation of the Client instance
+                */
+                Client.prototype.toString = function() {
+                    return &#x27;&lt;Client (&#x27; + this._options.username + &#x27;:&#x27; + this._options.password + &#x27;) &#x27; + this._options.endpoint + &#x27;&gt;&#x27;;
+                }
+                
+                
+                module.exports = Client;
+                
+                
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

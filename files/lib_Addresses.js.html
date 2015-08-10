@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/Addresses.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/Addresses.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule Addresses
+                */
+                
+                var ApiRequest = require(&#x27;./shared/ApiRequest.js&#x27;);
+                var Address = require(&#x27;./Address.js&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                
+                /**
+                * Addresses extends ApiRequest to perform operations on the Addresses resource
+                *
+                * @class Addresses
+                * @constructor
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the Address instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                * @param {String} template Template of Addresses resource
+                * @param {String} userId ID of an user resource
+                */
+                function Addresses(options,template,userId) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;]
+                    */
+                    this._supportedMethods = [&#x27;get&#x27;];
+                
+                    /**
+                    * Object containing the resource information, will be empty if getAddresses() is never called
+                    *
+                    * @private
+                    * @type {Array}
+                    * @default []
+                    * @property _addresses
+                    */
+                    this._addresses = [];
+                
+                    /**
+                    * Array containing the Address instances 
+                    *
+                    * @private
+                    * @type {Array}
+                    * @default []
+                    * @property _addressItems
+                    */
+                    this._addressItems = []; 
+                
+                    /**
+                    * ID of an user resource, used for rendering the path
+                    *
+                    * @private
+                    * @type {Array}
+                    * @default []
+                    * @property _addressItems
+                    */
+                    this._userId = userId;
+                
+                    /**
+                    * The URI template used to generate the URI to request 
+                    *
+                    * @private
+                    * @type String
+                    * @property _template
+                    */
+                    this._template = template || &#x27;/users/(:user)/addresses&#x27;;
+                
+                    /**
+                    * Object containing request path variables used to assemble the request URI
+                    *
+                    * @property _path
+                    * @type Object
+                    * @private
+                    */
+                    this._path = { user : this._userId };
+                }
+                
+                
+                Addresses.prototype = new ApiRequest();
+                
+                
+                /**
+                * Fetch the resource by making a HTTP GET request and calls the callback(if any), and provide a 
+                * promise to an array of Address instances
+                * 
+                * @method getAddresses
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with an array of Address instances
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of Address instances
+                * @return {Promise} Promise to an array of Address instances
+                */
+                Addresses.prototype.getAddresses = function(callback) {
+                    if ( this._addresses.length == 0 )
+                    {
+                        var that = this;
+                        return that.get().then(function(content) {
+                                        var items = [];
+                                        if ( &#x27;entries&#x27; in content ) {
+                                            that._addresses = content[&#x27;entries&#x27;];
+                                            that.length = that._addresses.length;
+                                        }
+                                        that._addresses.forEach(function(addrEntry) {
+                                            items.push(new Address(that._options,addrEntry));
+                                        });
+                                        that._addressItems = items;
+                                        return utils.promisify(that._addressItems,callback);
+                                    }).catch(function(e) {
+                                        // this should be passed to the node style callback when there is error and callback
+                                        console.error(e);
+                                    });
+                    } 
+                    else {
+                        return utils.promisify(this._addressItems,callback);
+                    }
+                }
+                
+                
+                /**
+                * Iterate over each of the Address instance associated with this Addresses instance
+                * 
+                * @method each 
+                * @param {Function} callback A callback function to be called with each Address instance
+                */
+                Addresses.prototype.each = function(callback) {
+                    var that = this;
+                    that.getAddresses().then(function() {
+                        for ( var index = 0 ; index &lt; that.length ; index++ ) {
+                            callback(new Address(that._options,that._addresses[index]));
+                        }
+                    });
+                }
+                
+                
+                /**
+                * Filter the Address instances by an email address and calls the callback(if any) with it, and provide a 
+                * Promise to it
+                * 
+                * @method each 
+                * @async
+                * @param {String} email Email address upon which filtering is done
+                * @param {Function} [callback] A callback function to be called with the filtered Address instance
+                * @return {Promise} A promise to the filtered Address instance 
+                */
+                Addresses.prototype.filterByEmail = function(email,callback) {
+                    if ( typeof email === &#x27;undefined&#x27; )     { throw new Error(&#x27;email not provided&#x27;); }
+                    var filterCallback = function(add) {
+                        if ( add.email === email )
+                            return true;
+                    } 
+                    var that = this;
+                    return that.getAddresses().then(function() {
+                                   var filteredArray = that._addressItems.filter(filterCallback);
+                                   if ( filteredArray.length != 0 )
+                                       return utils.promisify(filteredArray[0],callback);
+                                   else 
+                                       return utils.promisify(null,callback);
+                               });
+                }
+                
+                
+                module.exports = Addresses;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

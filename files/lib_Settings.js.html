@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/Settings.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/Settings.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule Settings
+                */
+                
+                var ApiRequest = require(&#x27;./shared/ApiRequest&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                var LIST_READ_ONLY_ATTRS = [
+                    &#x27;bounces_address&#x27;,
+                    &#x27;created_at&#x27;,
+                    &#x27;digest_last_sent_at&#x27;,
+                    &#x27;fqdn_listname&#x27;,
+                    &#x27;http_etag&#x27;,
+                    &#x27;join_address&#x27;,
+                    &#x27;last_post_at&#x27;,
+                    &#x27;leave_address&#x27;,
+                    &#x27;list_id&#x27;,
+                    &#x27;list_name&#x27;,
+                    &#x27;mail_host&#x27;,
+                    &#x27;next_digest_number&#x27;,
+                    &#x27;no_reply_address&#x27;,
+                    &#x27;owner_address&#x27;,
+                    &#x27;post_id&#x27;,
+                    &#x27;posting_address&#x27;,
+                    &#x27;request_address&#x27;,
+                    &#x27;scheme&#x27;,
+                    &#x27;volume&#x27;,
+                    &#x27;web_host&#x27;,
+                    ];
+                
+                
+                /**
+                * Settings extends ApiRequest to do operations on the settings resource
+                *
+                * @constructor
+                * @class Settings
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the Settings instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                * @param {String} template The URI template used to generate the URI to request 
+                */
+                function Settings(options,template) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;,&#x27;patch&#x27;]
+                    */
+                    this._supportedMethods = [&#x27;get&#x27;,&#x27;patch&#x27;];
+                
+                    /**
+                    * The URI template used to generate the URI to request 
+                    *
+                    * @private
+                    * @type String
+                    * @property _template
+                    */
+                    this._template = template;
+                
+                    /**
+                    * Object containing the resource information, will be null if getInfo() is never called
+                    *
+                    * @private
+                    * @type {Object}
+                    * @default null
+                    * @property _info
+                    */
+                    this._info = null;
+                
+                    /**
+                    * Keys of the _info object
+                    *
+                    * @private
+                    * @type Array
+                    * @property _keys
+                    * @default []
+                    */
+                    this._keys = [];
+                    
+                    /**
+                    * Length of the Settings object
+                    *
+                    * @property length
+                    * @default 0
+                    */
+                    this.length = 0;
+                }
+                
+                
+                Settings.prototype = new ApiRequest();
+                
+                
+                /**
+                * Fetch the resource by making a HTTP GET request and calls the callback(if any), and provide a 
+                * promise to the Settings object itself
+                * 
+                * @method getInfo
+                * @async
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Settings object itself
+                * @return {Promise} Promise to the Settings object itself
+                */
+                Settings.prototype.getInfo = function(callback) {
+                    if ( !this._info ) {
+                        var that = this;
+                        return that.get().then(function(data) {
+                                        that._info = data;
+                                        return that.getKeys();
+                                    }).then(function() {
+                                        that._setAccessors();
+                                        return utils.promisify(that,callback);
+                                    }).catch(function(e) {
+                                        console.error(e);
+                                    });
+                    }
+                    else {
+                        return utils.promisify(this,callback);
+                    }
+                }
+                
+                
+                /**
+                * Collect the keys of Settings object in an array if _info is present
+                *
+                * @async
+                * @method keys
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result An array of settings fields
+                * @return {Promise} Promise to the array of settings fields
+                */
+                Settings.prototype.getKeys = function(callback) {
+                    var that = this;
+                    return that.getInfo().then(function() {
+                                    that._keys = Object.keys(that._info);
+                                    that.length = that._keys.length;
+                                    return utils.promisify(that._keys,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Set the accessors on the object for the resource information i.e _info object
+                *
+                * @method _setAccessors
+                * @private
+                */
+                Settings.prototype._setAccessors = function() {
+                
+                    this._keys.forEach( (function(key) {
+                
+                        Object.defineProperty(this,key,{
+                
+                            get : function() {
+                                if ( key in this._info )
+                                    return this._info[key];
+                                else {
+                                    throw new Error(key + &#x27; not found in the Settings hashmap&#x27;);
+                                }
+                            },
+                
+                            set : function(value) {
+                                this._info[key] = value;
+                            },
+                
+                            configurable : true
+                        });
+                
+                    }).bind(this)
+                
+                    );
+                }
+                
+                
+                /**
+                * Get the settings value corresponding by providing it&#x27;s name and calls the callback(if any) 
+                * with it or provide a promise to it
+                *
+                * @async
+                * @method getValue
+                * @param {String} key The required setting
+                * @param {String|null} defaultValue The default value to be set/returned if the required setting is not found
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The required setting
+                * @return {Promise} Promise to the required setting
+                */
+                Settings.prototype.getValue = function(key,defaultValue,callback) {
+                    defaultValue = defaultValue || null;
+                    var that = this;
+                    return that.getInfo().then(function (data){
+                                    var retValue;
+                                    if ( key in that._info ) {
+                                        retValue = that._info[key];
+                                    } else {
+                                        retValue = defaultValue;
+                                    }
+                                    return utils.promisify(retValue,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * Save the current settings upstream
+                *
+                * @async
+                * @method save
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Settings object itself
+                * @return {Promise} Promise to the Settings object itself
+                */
+                Settings.prototype.save = function(callback) {
+                    var data = {};
+                    var that = this;
+                
+                    that._keys.forEach(function(key) {
+                
+                            if ( LIST_READ_ONLY_ATTRS.indexOf(key) == -1) {
+                                data[key] = that._info[key];
+                            }
+                            
+                        }
+                    );
+                
+                    return that.patch(data).then(function() {
+                                    that._info = null;
+                                    return utils.promisify(that,callback);
+                                }).catch(function(e) {
+                                    console.error(e);
+                                });
+                }
+                
+                
+                /**
+                * String representation of the Settings object
+                *
+                * @method toString
+                * @return {String} The string representation of the object
+                */
+                Settings.prototype.toString = function() {
+                    return JSON.stringify(this._info);
+                }
+                
+                
+                module.exports = Settings;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>

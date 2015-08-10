@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>lib/Page.js - The mailman-client API</title>
+    <link rel="stylesheet" href="../assets/vendor/prettify/prettify-min.css">
+    <link rel="stylesheet" href="../assets/css/main.css" id="site_styles">
+    <link rel="shortcut icon" type="image/png" href="../assets/favicon.png">
+    <script src="../assets/vendor/yui-min.js"></script>
+</head>
+<body>
+
+<div id="doc">
+    <header class="main-header">
+        <div class="content">
+            <div class="project-title">
+                    <img class="logo" src="http://www.gnu.org/software/mailman/images/logo2010-2.jpg" title="The mailman-client API">
+                    <h1 class="project-name">The mailman-client API</h1> <span class="project-version">0.1</span>
+                    <p class="description">A Node.js client for mailman-core</p>
+            </div>
+            <ul class="jump-links">
+                <li><a href="#index" class="index-jump-link">index</a></li>
+                <li><a href="#top" class="top-jump-link">top</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="bd" class="main-body">
+
+        <div id="docs-sidebar" class="sidebar apidocs">
+            <div id="api-list">
+                <div id="api-tabview" class="tabview">
+                    <ul class="tabs">
+                        <li><a href="#api-classes">Classes</a></li>
+                        <li><a href="#api-modules">Modules</a></li>
+                    </ul>
+            
+                    <div id="api-tabview-filter">
+                        <input type="search" id="api-filter" placeholder="Type to filter APIs">
+                    </div>
+            
+                    <div id="api-tabview-panel">
+                        <ul id="api-classes" class="apis classes">
+                            <li><a class="type" href="../classes/Address.html">Address</a></li>
+                            <li><a class="type" href="../classes/Addresses.html">Addresses</a></li>
+                            <li><a class="type" href="../classes/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="type" href="../classes/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="type" href="../classes/Client.html">Client</a></li>
+                            <li><a class="type" href="../classes/Domain.html">Domain</a></li>
+                            <li><a class="type" href="../classes/List.html">List</a></li>
+                            <li><a class="type" href="../classes/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="type" href="../classes/Member.html">Member</a></li>
+                            <li><a class="type" href="../classes/Page.html">Page</a></li>
+                            <li><a class="type" href="../classes/Preferences.html">Preferences</a></li>
+                            <li><a class="type" href="../classes/Settings.html">Settings</a></li>
+                            <li><a class="type" href="../classes/User.html">User</a></li>
+                        </ul>
+            
+                        <ul id="api-modules" class="apis modules">
+                            <li><a class="module" href="../modules/Address.html">Address</a></li>
+                            <li><a class="module" href="../modules/Addresses.html">Addresses</a></li>
+                            <li><a class="module" href="../modules/ApiRequest.html">ApiRequest</a></li>
+                            <li><a class="module" href="../modules/BaseRequest.html">BaseRequest</a></li>
+                            <li><a class="module" href="../modules/Domain.html">Domain</a></li>
+                            <li><a class="module" href="../modules/List.html">List</a></li>
+                            <li><a class="module" href="../modules/ListArchivers.html">ListArchivers</a></li>
+                            <li><a class="module" href="../modules/mailman-client.html">mailman-client</a></li>
+                            <li><a class="module" href="../modules/Member.html">Member</a></li>
+                            <li><a class="module" href="../modules/Page.html">Page</a></li>
+                            <li><a class="module" href="../modules/Preferences.html">Preferences</a></li>
+                            <li><a class="module" href="../modules/Settings.html">Settings</a></li>
+                            <li><a class="module" href="../modules/User.html">User</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="docs-main" class="apidocs">
+            <div class="content container">
+                <h1 class="file-heading">File: lib/Page.js</h1>
+                
+                <div class="file">
+                    <pre class="code prettyprint linenums">
+                &#x27;use strict&#x27;;
+                /**
+                * @module mailman-client
+                * @submodule Page
+                */
+                
+                var ApiRequest = require(&#x27;./shared/ApiRequest.js&#x27;);
+                var utils = require(&#x27;./utils&#x27;);
+                
+                var DEFAULT_PAGE_ITEM_COUNT = 50;
+                
+                /**
+                * Page extends ApiRequest to provide pagination functionality 
+                * 
+                * @constructor
+                * @class Page
+                * @extends ApiRequest
+                * @param {Object} options A hash of options for the Member instance
+                * @param {String} options.endpoint The endpoint URI to request
+                * @param {String} [options.username] A username for authenticating API requests
+                * @param {String} [options.password] A password for authenticating API requests
+                * @param {String} path The path to be requested
+                * @param {Object} model Resource class on which pagination is to be done, eg. List, Domain etc.
+                * @param {Number} count Number of items on a page
+                * @param {Number} page Number of pages to be requested 
+                */
+                function Page(options,path,model,count,page) {
+                    /**
+                    * Configuration options such as the endpoint of the API, auth parameters etc.
+                    * 
+                    * @private
+                    * @type Object
+                    * @property _options
+                    * @default {}
+                    */
+                    this._options = options || {};
+                
+                     /**
+                    * The URI template used to generate the URI to request 
+                    *
+                    * @private
+                    * @type String
+                    * @property _template
+                    */
+                    this._template = path;
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;]
+                    */
+                    this._supportedMethods = [&#x27;get&#x27;];
+                
+                    /**
+                    * Supported HTTP methods
+                    *
+                    * @property _supportedMethods
+                    * @type Array
+                    * @private
+                    * @default [&#x27;get&#x27;,&#x27;delete&#x27;]
+                    */
+                    this._model = model;
+                
+                    this._count = count;
+                
+                    this._page = page;
+                
+                    this._entries = null;
+                }
+                
+                
+                Page.prototype = new ApiRequest();
+                
+                
+                /**
+                * Creates the page corresponding to the Model class
+                *
+                * @async
+                * @private
+                * @method _createPage
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Page object itself
+                * @return {Promise} Promise to the Page object itself
+                */
+                Page.prototype._createPage = function(callback) {
+                    if (!this._entries) {
+                        var that = this;
+                        that._entries = [];
+                        return that.query({count : that._count.toString(), page : that._page.toString()})
+                                   .get()
+                                   .then(function(resp) {
+                                        if ( &#x27;entries&#x27; in resp ) {
+                                            resp.entries.forEach(function(entry) {
+                                                that._entries.push(new that._model(that._options,entry.self_link));
+                                            });
+                                        }
+                                        that.length = that._entries.length;
+                                        return utils.promisify(that,callback);
+                                   });
+                    } else {
+                        return utils.promisify(this,callback);
+                    }
+                }
+                
+                
+                /**
+                * Get the current page
+                * 
+                * @async
+                * @method current
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Page object itself
+                * @return {Promise} Promise to the Page object itself
+                */
+                Page.prototype.current = function(callback) {
+                    return this._createPage(callback);
+                }
+                
+                
+                /**
+                * Get the next page
+                * 
+                * @async
+                * @method next
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Page object itself
+                * @return {Promise} Promise to the Page object itself
+                */
+                Page.prototype.next = function(callback) {
+                    this._page++;
+                    this._entries = null;
+                    return this._createPage(callback);
+                }
+                
+                
+                /**
+                * Get the previous page
+                * 
+                * @async
+                * @method previous
+                * @param {Function} [callback] The callback function to be invoked with the results
+                * @param {Error|Object} callback.err Any errors encountered during the request
+                * @param {Object} callback.result The Page object itself
+                * @return {Promise} Promise to the Page object itself
+                */
+                Page.prototype.previous = function(callback) {
+                    if  ( this._page &gt; 1 ) {
+                        this._page--;
+                        this._entries = null;
+                        return this._createPage(callback);
+                    }
+                }
+                
+                
+                /**
+                * Iterate over all the entries in the current page
+                * 
+                * @async
+                * @method each
+                * @param {Function} callback The callback function to be invoked with each page entry
+                */
+                Page.prototype.each = function(callback) {
+                    var that = this;
+                    that.current().then(function() {
+                        that._entries.forEach(function(entry) {
+                            callback(entry);
+                        });
+                    });
+                }
+                
+                
+                /**
+                * Calls the callback with all the entries of the current page
+                *
+                * @async
+                * @method all
+                * @param {Function} callback The callback function to be invoked
+                */
+                Page.prototype.all = function(callback) {
+                    var that = this;
+                    return that.current().then(function() {
+                        return utils.promisify(that._entries,callback);
+                    });
+                }
+                
+                
+                /**
+                * String representation of the Page object
+                *
+                * @method toString
+                * @return {String} Returns the string representation of the Page object
+                */
+                Page.prototype.toString = function() {
+                    return &#x27;&lt;Page &#x27; + this._page + &#x27; (&#x27; + this._model + &#x27;)&gt;&#x27;
+                }
+                
+                
+                module.exports = Page;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="../assets/vendor/prettify/prettify-min.js"></script>
+<script>prettyPrint();</script>
+<script src="../assets/vendor/jquery.min.js"></script>
+<script src="../assets/js/jquery-offscreen-trigger.js"></script>
+<script src="../assets/js/yui-prettify.js"></script>
+<script src="../assets/../api.js"></script>
+<script src="../assets/js/api-filter.js"></script>
+<script src="../assets/js/api-list.js"></script>
+<script src="../assets/js/api-search.js"></script>
+<script src="../assets/js/apidocs.js"></script>
+</body>
+</html>
